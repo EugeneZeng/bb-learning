@@ -48,8 +48,7 @@
 		},
 		renderCallback: 'renderViewMode',
 		render:function(){
-			this[this.renderCallback]();
-			return this;
+			return this[this.renderCallback]();
 		},
 		events: {
 			"click button[name='edit']":"edit",
@@ -93,13 +92,6 @@
 					var width = item.width ? ' width="'+ item.width +'"' : '';
 					return '<th'+ width +'>'+ item.text +'</th>';
 			});
-			/*
-			var bodyStr = _.map(this.collection.models, function(model, key){
-				return new InvoiceItemView({
-					model: model
-				}).render().el;
-			});
-			*/
 			var _me = this;
 			$(this.el).empty()
 					.append('<tr></tr>')
@@ -110,15 +102,16 @@
 			return this;
 		},
 		append: function (model) {
-			var modelEl = new InvoiceItemView({model: model}).render().el.
+			var modelEl = new InvoiceItemView({model: model}).render().el;
 			this.$el.append(modelEl);
 		},
 		initialize: function () {
 			this.listenTo(this.collection, 'add', this.append, this);		
+			this.listenTo(this.collection, 'remove', this.render, this);				
 		}
 	});
 	
-	var InvoiceItemListControlView = Backbone.view.extend({
+	var InvoiceItemListControlView = Backbone.View.extend({
 		template:_.template('<button type="button" class="btn btn-default" name="<%=name %>"><%=text %></button>'),
 		render: function(){
 			var btns = [
@@ -129,20 +122,46 @@
 			var html = _.map(btns, function(btn){
 				return _me.template(btn);			
 			});
+			html = '<div class="btn-group" role="group">'+ html.join("") +'</div>';
 			this.$el.html(html);
+			return this;
 		},
 		events:{
-			'click [name="add"]':'addNewInvoiceItem',
-			'click [name="remove"]':'removeNewInvoiceItem'		
+			'click [name="add"]'	:'addNewInvoiceItem',
+			'click [name="remove"]'	:'removeNewInvoiceItem'		
+		},
+		addNewInvoiceItem:function(){
+			var description = prompt('Enter item description', '');
+			var price = prompt('Enter item price', '0');
+			var quantity = prompt('Enter item quantity', '1');
+			
+			this.collection.add([{
+				description	: description,
+				price		: price,
+				quantity	: quantity
+			}]);
+		},
+		removeNewInvoiceItem:function(){
+			var position = prompt("Enter position to remove", '0');
+			var model = this.collection.at(position);
+			if(model){
+				this.collection.remove(model);
+			}
 		}
 	});
 
 	var InvoiceItemListPageView = Backbone.View.extend({
+		
 		render:function(){
 			var invoiceItemListView = new InvoiceItemListView({
 				collection: this.collection
 			});
-			$("#content").html(invoiceItemListView.render().el);
+			var invoiceItemListControlView = new InvoiceItemListControlView({
+				collection: this.collection
+			});
+			$('#content').html(invoiceItemListView.render().el)
+					.append(invoiceItemListControlView.render().el);
+			
 		}
 	});
 
