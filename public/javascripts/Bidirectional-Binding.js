@@ -28,7 +28,7 @@ var InvoiceItemFormView = Backbone.View.extend({
   }
 });
 var InvoiceItemView = Backbone.View.extend({
-  className: 'row bg-primary',
+  className: 'row',
   bindings: {
     '#description':'description',
     '#price':{
@@ -57,7 +57,7 @@ var InvoiceSelectorView = Backbone.View.extend({
   className:'row',
   render: function(){
     var _me = this;
-    var $html = $('<select></select>');
+    var $html = $('<select id="invoiceSelector"></select>');
     _.each(this.collection.models, function(model, index){
       $html.append(_me.getModelEl(model, index));
     });
@@ -66,13 +66,20 @@ var InvoiceSelectorView = Backbone.View.extend({
     return this;
   },
   getModelEl:function(model, index){
-    var html = '<option value="'+ index +'">'+ model.get('description') +'</option>';
+    var html = '<option value="'+ index +'">'+ model.get('description') || 'New Description' +'</option>';
     return html;
+  },
+  onSelectorChange:function(e){
+    var value = $("#invoiceSelector").val();
+    this.model.set("index", value);
   },
   bindings: {
     'select': {
       observe: 'index'
     }
+  },
+  events:{
+    'change select#invoiceSelector':'onSelectorChange'
   }
 });
 var invoiceItemModel = new InvoiceItemModel({
@@ -90,9 +97,43 @@ var invoiceItemCollection = new InvoiceItemCollection([
   { description: 'Farmer Figure', price: 8, quantity: 4 },
   { description: 'Toy Tractor', price: 15, quantity: 6 }
 ]);
+
+var InvoiceView = Backbone.View.extend({
+  // model: Backbone.Model.extend({
+  //   selectedItem: 0
+  // }),
+  className: 'panel panel-default',
+  events: {
+    'click #invoice-head button.btn':'addNewInvoiceItem'
+  }
+  onInvoiceSelectorChanged:function(model){
+    var index = model.get('index');
+    var theirModel = this.invoiceSelectorView.collection.models[index];
+    this.invoiceItemView.model.set(theirModel.toJSON());
+  },
+  addNewInvoiceItem:function(){
+
+  },
+  initialize: function(){
+    var html = $("#invoice-template").html();
+    this.el.innerHTML = html;
+    this.invoiceSelectorView = new InvoiceSelectorView({collection: invoiceItemCollection, model: invoiceSelectorModel});
+    this.invoiceItemView = new InvoiceItemView({model: invoiceItemModel});
+    this.invoiceItemFormView = new InvoiceItemFormView({model: invoiceItemModel});
+
+    this.invoiceSelectorView.model.on('change:index', this.onInvoiceSelectorChanged, this);
+  },
+  render: function(){
+    var _me = this;
+    this.$el = $(this.el);
+    this.$el.find("#invoice-head").append(_me.invoiceSelectorView.render().el).find('.row').append('<button type="button" class="btn btn-primary">Add</button>');
+    this.$el.find("#invoice-body").append(_me.invoiceItemFormView.render().el);
+    this.$el.find("#invoice-footer").append(_me.invoiceItemView.render().el);
+    $('#content').append(_me.el);
+    return this;
+  }
+});
+
 $(function(){
-  $('#content')
-    .append(new InvoiceSelectorView({collection: invoiceItemCollection, model: invoiceSelectorModel}).render().el)
-    .append(new InvoiceItemView({model: invoiceItemModel}).render().el)
-    .append(new InvoiceItemFormView({model: invoiceItemModel}).render().el);
+  new InvoiceView({model: Backbone.Model.extend({})}).render();
 });
