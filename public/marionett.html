@@ -23,16 +23,17 @@
     <div class="panel-body" id="invoice-body">
       <table class="table table-striped table-hover">
         <thead>
-          <tr><th>Description</th><th width="50">Price</th><th width="50">Quantity</th><th width="150">Operation</th></tr>
+          <tr><th>Description</th><th width="50">Price</th><th width="50">Quantity</th><th width="50">Amount</th><th width="150">Operation</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-    <div class="panel-footer" id="invoice-footer"><button type="button" class="btn btn-default">Add</button></div>
+    <div class="panel-footer" id="invoice-footer"><button type="button" class="btn btn-default" name="add">Add</button></div>
   </div>
 </script>
 <script type="text/template" id="item-template">
-  <td><%=Description %></td><td><%=Price %></td><td><%=Quantity %></td><td>
+  <td><%=Description %></td><td><%=Price %></td><td><%=Quantity %></td><td><%=Amount %></td>
+  <td>
     <div class="btn-group" role="group">
       <button type="button" class="btn btn-default" data-id="<%=id %>">Edit</button>
       <button type="button" class="btn btn-danger" data-id="<%=id %>">Delete</button>
@@ -43,6 +44,7 @@
   <td><input type="text" name="Description" value="<%=Description %>" class="form-control" placeholder="Description..." data-id="Description" /></td>
   <td><input type="text" name="Price" value="<%=Price %>" class="form-control" placeholder="Price..." data-id="Price" /></td>
   <td><input type="text" name="Quantity" value="<%=Quantity %>" class="form-control" placeholder="Quantity..." data-id="Quantity" /></td>
+  <td></td>
   <td>
     <div class="btn-group" role="group">
       <button type="button" class="btn btn-success" data-id="<%=id %>">OK</button>

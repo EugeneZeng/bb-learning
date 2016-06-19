@@ -44,6 +44,13 @@ var InvoiceCollection = Backbone.Collection.extend({
 var InvoiceItemView = Marionette.ItemView.extend({
   tagName: "tr",
   template: "#item-template",
+
+  // template: function(serialized_model){
+  //   var tmp = $("#item-template").html();
+  //   var amount = this.catculateAmount();
+  //   var data = _.extend({Amount: amount}, serialized_model);
+  //   return _.template(tmp, data);
+  // },
   ui: {
     "edit":".btn-default"
   },
@@ -52,6 +59,14 @@ var InvoiceItemView = Marionette.ItemView.extend({
   },
   initialize:function(){
     this.model.on("change", this.render);
+  },
+  onBeforeRender:function(){
+    this.model.set("Amount", this.catculateAmount());
+  },
+  catculateAmount :function(){
+    var price = this.model.get("Price");
+    var quantity = this.model.get("Quantity");
+    return parseInt(price) * parseInt(quantity);
   },
   itemEdit:function(){
     var _self = this;
@@ -87,6 +102,7 @@ var EmptyInvoiceItemView = Marionette.ItemView.extend({
       this.model = new Backbone.Model(options.initData);
     } else {
       this.model = new Backbone.Model({
+        id:"iv"+_.random(0,1000),
         Price:0,
         Description:"",
         Quantity:0
@@ -123,10 +139,12 @@ var InvoicePanelView = Marionette.CompositeView.extend({
   itemViewContainer: "tbody",
   template: "#panel-template",
   ui: {
-    "delete":".btn-danger"
+    "delete":".btn-danger",
+    "add":"[name='add']"
   },
   events:{
-    "click @ui.delete":"itemDelete"
+    "click @ui.delete":"itemDelete",
+    "click @ui.add":"itemAdd"
   },
   // collectionEvents:{
   //   "remove":"removeItem"
@@ -137,6 +155,16 @@ var InvoicePanelView = Marionette.CompositeView.extend({
   itemDelete:function(e){
     var id = $(e.currentTarget).attr("data-id");
     this.collection.deleteById(id);
+  },
+  itemAdd:function(e){
+    var _self = this;
+    var editView = new EmptyInvoiceItemView({
+      onSubmit:function(){
+        var data = this.model.toJSON();
+        _self.collection.add(data);
+      }
+    });
+    this.$el.find(this.itemViewContainer).append(editView.render().el);
   }
 });
 
