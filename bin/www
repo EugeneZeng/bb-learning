@@ -5,6 +5,7 @@
  */
 
 var app = require('../app');
+var SocketAPP = require('../socketAPP');
 var debug = require('debug')('masterhead:server');
 var http = require('http');
 
@@ -28,6 +29,7 @@ var server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+new SocketAPP(server);
 
 /**
  * Normalize a port into a number, string, or false.

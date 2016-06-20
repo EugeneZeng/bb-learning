@@ -1,35 +1,4 @@
-var data = [
-  {
-    id:"iv001",
-    Price:25,
-    Description:"Eugene's Invoice",
-    Quantity:3
-  },
-  {
-    id:"iv002",
-    Price:22,
-    Description:"Serena's Invoice",
-    Quantity:2
-  },
-  {
-    id:"iv003",
-    Price:12,
-    Description:"Mike's Invoice",
-    Quantity:5
-  },
-  {
-    id:"iv004",
-    Price:13,
-    Description:"Allen's Invoice",
-    Quantity:4
-  },
-  {
-    id:"iv005",
-    Price:13,
-    Description:"Aliang's Hotel live",
-    Quantity:13
-  }
-];
+
 var InvoiceCollection = Backbone.Collection.extend({
   findById: function(id){
     return this.find(function(model){
@@ -44,13 +13,6 @@ var InvoiceCollection = Backbone.Collection.extend({
 var InvoiceItemView = Marionette.ItemView.extend({
   tagName: "tr",
   template: "#item-template",
-
-  // template: function(serialized_model){
-  //   var tmp = $("#item-template").html();
-  //   var amount = this.catculateAmount();
-  //   var data = _.extend({Amount: amount}, serialized_model);
-  //   return _.template(tmp, data);
-  // },
   ui: {
     "edit":".btn-default"
   },
@@ -58,7 +20,11 @@ var InvoiceItemView = Marionette.ItemView.extend({
     "click @ui.edit":"itemEdit"
   },
   initialize:function(){
-    this.model.on("change", this.render);
+    var _self = this;
+    this.model.on("change", function(){
+      _self.render();
+      _self.trigger("invoiceChanged", _self.model);
+    });
   },
   onBeforeRender:function(){
     this.model.set("Amount", this.catculateAmount());
@@ -146,9 +112,15 @@ var InvoicePanelView = Marionette.CompositeView.extend({
     "click @ui.delete":"itemDelete",
     "click @ui.add":"itemAdd"
   },
-  // collectionEvents:{
-  //   "remove":"removeItem"
-  // },
+  initialize:function(){
+    var _self = this;
+    this.on("itemview:invoiceChanged", function(){
+      _self.trigger("dataUpdated");
+    });
+    this.collection.on("add remove", function(){
+      _self.trigger("dataUpdated");
+    })
+  },
   show:function(){
     $("#content").append(this.el);
   },
@@ -167,15 +139,26 @@ var InvoicePanelView = Marionette.CompositeView.extend({
     this.$el.find(this.itemViewContainer).append(editView.render().el);
   }
 });
+  var invoices = new InvoicePanelView({
+    model: new Backbone.Model({
+      title: "All Invoices"
+    }),
+    collection: new InvoiceCollection([])
+  });
+  var socket = io();
+  socket.on("data init", function(data){
+    invoices.collection.set(data);
+    invoices.on("dataUpdated", function(){
+      socket.emit("data synchornizing", invoices.collection.toJSON());
+    });
+  });
+  socket.on("data synchornizing", function(data){
+    invoices.collection.set(data);
+  });
+
 
 (function($){
   $(function(){
-    var invoices = new InvoicePanelView({
-      model: new Backbone.Model({
-        title: "All Invoices"
-      }),
-      collection: new InvoiceCollection(data)
-    });
     invoices.render().show();
   });
 })(jQuery)
